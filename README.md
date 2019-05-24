@@ -5,7 +5,7 @@ of this database is to store Go data structures on disk.
 
 ## Example
 
-```
+``` go
 import "github.com/andresoro/lytedb"
 
 // Only exported fields are encoded
