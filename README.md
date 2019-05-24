@@ -10,13 +10,13 @@ import "github.com/andresoro/lytedb"
 
 // Only exported fields are encoded
 type Example struct {
-    Data: string,
-    Num: int,
+    Data    string
+    Num     int
 }
 
 func main() {
 
-    db := lyte.New("/path/to/database/)
+    db := lyte.New("/path/to/database/")
 
     data := Example{
         Data: "Hello World",
