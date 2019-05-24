@@ -1,22 +1,47 @@
 package lyte
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
+
+type user struct {
+	Age  int
+	Name string
+}
 
 func TestDB(t *testing.T) {
 
-	t.Run("testing open", func(t *testing.T) {
+	// init DB
+	path := "./data.db"
+	db, err := New("./data.db")
+	if err != nil {
+		t.Fatal("DB will not open. Gives error: ", err)
+	}
+	defer func() {
+		db.Close()
+		os.Remove(path)
+	}()
 
-	})
+	testUser := user{
+		Age:  25,
+		Name: "Napoleon",
+	}
 
-	t.Run("testing close", func(t *testing.T) {
+	err = db.Add("users", "user1", testUser)
+	if err != nil {
+		t.Fatal("Error adding user to database: ", err)
+	}
 
-	})
+	var returnUser user
 
-	t.Run("testing add", func(t *testing.T) {
+	err = db.Get("users", "user1", &returnUser)
+	if err != nil {
+		t.Fatal("Error getting user from database: ", err)
+	}
 
-	})
+	if testUser != returnUser {
+		t.Fatal("Not returning the same user")
+	}
 
-	t.Run("testing get", func(t *testing.T) {
-
-	})
 }

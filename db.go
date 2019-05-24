@@ -12,7 +12,7 @@ import (
 // It is up to the user to define these collections and add the relevant data
 type DB struct {
 	path        string
-	collections map[string]*bbolt.Bucket
+	collections map[string]bool
 	bolt        *bbolt.DB
 }
 
@@ -25,7 +25,7 @@ func New(path string) (*DB, error) {
 
 	db := &DB{
 		path:        path,
-		collections: make(map[string]*bbolt.Bucket),
+		collections: make(map[string]bool),
 		bolt:        bolt,
 	}
 
@@ -47,22 +47,22 @@ func (db *DB) Add(col string, key string, data interface{}) error {
 
 	err := db.bolt.Update(func(tx *bbolt.Tx) error {
 		// if bucket doesnt exist, create it and add to map
-		bucket, ok := db.collections[col]
+		_, ok := db.collections[col]
 		if !ok {
 			b, err := tx.CreateBucket([]byte(col))
 			if err != nil {
 				return err
 			}
-			db.collections[col] = b
+			db.collections[col] = true
 
 			// add key/val to bucket
 			err = b.Put(k, v.Bytes())
 			if err != nil {
-				return nil
+				return err
 			}
 			return nil
 		}
-
+		bucket := tx.Bucket([]byte(col))
 		err := bucket.Put(k, v.Bytes())
 		if err != nil {
 			return err
@@ -79,19 +79,21 @@ func (db *DB) Add(col string, key string, data interface{}) error {
 func (db *DB) Get(col, key string, value interface{}) error {
 
 	err := db.bolt.View(func(tx *bbolt.Tx) error {
-		bucket, ok := db.collections[col]
+		_, ok := db.collections[col]
 		if !ok {
 			return errors.New("Collection does not exist")
 		}
 
-		c := bucket.Cursor()
-		k, v := c.Seek([]byte(key))
-		if k == nil || string(k) != key {
-			return errors.New("Key not found")
-		}
+		bucket := tx.Bucket([]byte(col))
+		k := []byte(key)
+		v := bucket.Get(k)
 
 		data := bytes.NewReader(v)
-		return gob.NewDecoder(data).Decode(value)
+		err := gob.NewDecoder(data).Decode(value)
+		if err != nil {
+			return err
+		}
+		return nil
 	})
 
 	return err
