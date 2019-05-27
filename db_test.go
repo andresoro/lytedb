@@ -23,25 +23,58 @@ func TestDB(t *testing.T) {
 		os.Remove(path)
 	}()
 
-	testUser := user{
+	user1 := user{
+		Name: "Queen Elizabeth",
 		Age:  25,
-		Name: "Napoleon",
 	}
 
-	err = db.Add("users", "user1", testUser)
+	err = db.Add("user1", user1)
 	if err != nil {
-		t.Fatal("Error adding user to database: ", err)
+		t.Fatalf("Add failed with error: %s", err)
 	}
 
 	var returnUser user
-
-	err = db.Get("users", "user1", &returnUser)
+	err = db.Get("user1", &returnUser)
 	if err != nil {
-		t.Fatal("Error getting user from database: ", err)
+		t.Fatalf("Get failed with error: %s", err)
 	}
 
-	if testUser != returnUser {
-		t.Fatal("Not returning the same user")
+	if returnUser != user1 {
+		t.Fatal("Return struct not the same as input")
+	}
+}
+
+func TestCollection(t *testing.T) {
+	// init DB
+	path := "./data.db"
+	db, err := New("./data.db")
+	if err != nil {
+		t.Fatal("DB will not open. Gives error: ", err)
+	}
+	defer func() {
+		db.Close()
+		os.Remove(path)
+	}()
+
+	col, err := db.Collection("users")
+	if err != nil {
+		t.Fatalf("Could not create collection: %s", err)
+	}
+
+	user1 := &user{
+		Name: "Andres",
+		Age:  21,
+	}
+
+	err = col.Add("user1", user1)
+	if err != nil {
+		t.Fatalf("Could not add to collection: %s", err)
+	}
+
+	var returnUser user
+	err = col.Get("user1", &returnUser)
+	if err != nil {
+		t.Fatalf("Could not get from collection: %s", err)
 	}
 
 }
