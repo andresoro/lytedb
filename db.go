@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
+	"fmt"
+	"sync"
 
 	"go.etcd.io/bbolt"
 )
@@ -12,21 +14,32 @@ import (
 // It is up to the user to define these collections and add the relevant data
 type DB struct {
 	path        string
-	collections map[string]bool
+	collections map[string]*Col
 	bolt        *bbolt.DB
+	mu          *sync.Mutex
 }
 
 // New returns a new db object
 func New(path string) (*DB, error) {
+
+	// underlying database
 	bolt, err := bbolt.Open(path, 0666, nil)
 	if err != nil {
 		return nil, errors.New("Unable to open DB file")
 	}
 
+	// main DB struct
 	db := &DB{
 		path:        path,
-		collections: make(map[string]bool),
+		collections: make(map[string]*Col),
 		bolt:        bolt,
+		mu:          &sync.Mutex{},
+	}
+
+	// main collection to hold general values
+	err = db.createBucket("main")
+	if err != nil {
+		return nil, err
 	}
 
 	return db, nil
@@ -37,31 +50,47 @@ func (db *DB) Close() error {
 	return db.bolt.Close()
 }
 
-// Add data specified by a key to a given collection
-func (db *DB) Add(col string, key string, data interface{}) error {
+// Collection will return a reference to the underlying collection
+// or create a new one if already exists
+func (db *DB) Collection(name string) (*Col, error) {
+	col, ok := db.collections[name]
+	if ok {
+		return col, nil
+	}
 
+	db.mu.Lock()
+
+	col = &Col{
+		name: name,
+		db:   db,
+	}
+	db.collections[name] = col
+
+	db.mu.Unlock()
+
+	err := db.createBucket(name)
+
+	return col, err
+}
+
+// Add data specified by a key to the "main" collection
+func (db *DB) Add(key string, data interface{}) error {
+	return db.add("main", key, data)
+}
+
+// Get will retreive the key from the "main" collection and write the data
+// to the data interface
+func (db *DB) Get(key string, data interface{}) error {
+	return db.get("main", key, data)
+}
+
+func (db *DB) add(col, key string, data interface{}) error {
 	// encode key/values
 	k := []byte(key)
 	var v bytes.Buffer
 	gob.NewEncoder(&v).Encode(data)
 
 	err := db.bolt.Update(func(tx *bbolt.Tx) error {
-		// if bucket doesnt exist, create it and add to map
-		_, ok := db.collections[col]
-		if !ok {
-			b, err := tx.CreateBucket([]byte(col))
-			if err != nil {
-				return err
-			}
-			db.collections[col] = true
-
-			// add key/val to bucket
-			err = b.Put(k, v.Bytes())
-			if err != nil {
-				return err
-			}
-			return nil
-		}
 		bucket := tx.Bucket([]byte(col))
 		err := bucket.Put(k, v.Bytes())
 		if err != nil {
@@ -74,16 +103,9 @@ func (db *DB) Add(col string, key string, data interface{}) error {
 	return err
 }
 
-// Get will decode the data under the collection/key onto the value passed
-// will return an error if not found or otherwise
-func (db *DB) Get(col, key string, value interface{}) error {
+func (db *DB) get(col, key string, value interface{}) error {
 
 	err := db.bolt.View(func(tx *bbolt.Tx) error {
-		_, ok := db.collections[col]
-		if !ok {
-			return errors.New("Collection does not exist")
-		}
-
 		bucket := tx.Bucket([]byte(col))
 		k := []byte(key)
 		v := bucket.Get(k)
@@ -94,6 +116,19 @@ func (db *DB) Get(col, key string, value interface{}) error {
 			return err
 		}
 		return nil
+	})
+
+	return err
+}
+
+func (db *DB) createBucket(name string) error {
+	err := db.bolt.Update(func(tx *bbolt.Tx) error {
+		_, err := tx.CreateBucket([]byte(name))
+		if err != nil {
+			return fmt.Errorf("Cannot create collection: %s", err)
+		}
+
+		return err
 	})
 
 	return err
