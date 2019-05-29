@@ -7,7 +7,7 @@ of this database is to store Go data structures on disk.
 
 ## Open DB
 
-Simply supply a path to a file. If no file exists, it will be craeted automatically. Remember that this will obtain a file lock on the specified file so no other process can open it. 
+Simply supply a path to a file. If no file exists, it will be created automatically. Remember that this will obtain a file lock on the specified file so no other process can open it. 
 
 ``` go 
 
