@@ -47,7 +47,7 @@ func TestDB(t *testing.T) {
 func TestCollection(t *testing.T) {
 	// init DB
 	path := "./data.db"
-	db, err := New("./data.db")
+	db, err := New(path)
 	if err != nil {
 		t.Fatal("DB will not open. Gives error: ", err)
 	}
@@ -76,5 +76,38 @@ func TestCollection(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Could not get from collection: %s", err)
 	}
+}
 
+func TestUniqueKeysOnCollections(t *testing.T) {
+	path := "./data.db"
+	db, err := New(path)
+	if err != nil {
+		t.Fatal("DB will not open. Gives error: ", err)
+	}
+	defer func() {
+		db.Close()
+		os.Remove(path)
+	}()
+
+	col1, err := db.Collection("collection1")
+	if err != nil {
+		t.Fatal("Could not create collection: ", err)
+	}
+
+	col2, err := db.Collection("collection2")
+	if err != nil {
+		t.Fatal("Could not create second collection: ", err)
+	}
+
+	// should be able to use the same key in different collections
+
+	err = col1.Add("key", "value")
+	if err != nil {
+		t.Fatal("Error adding key/value to store: ", err)
+	}
+
+	err = col2.Add("key", "value")
+	if err != nil {
+		t.Fatal("Error adding same key to different collection: ", err)
+	}
 }
