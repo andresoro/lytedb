@@ -19,6 +19,16 @@ defer db.Close()
 
 ```
 
+## Collections
+
+Data can be divided into different groups called collections. Collections are a convenient way to seperate data while maintaining unique keys. Meaning you can have entries with the same key as long as they are in different collections.
+
+``` go
+userDB, err := db.Collection("users")
+
+userDB.Add("user1", user)
+```
+
 ## Add/Get data
 
 lytedb uses collections to seperate data but also uses a "main" collection for general storage. Remember that the db encodes values so only exported values get written.
@@ -47,14 +57,5 @@ var user User
 db.Get("napoleon", &user)
 ```
 
-## Collections
-
-Data can be divided into different groups called collections. Collections are a convenient way to seperate data while maintaining unique keys. Meaning you can have entries with the same key as long as they are in different collections.
-
-``` go
-userDB, err := db.Collection("users")
-
-userDB.Add("user1", user)
-```
 
 
