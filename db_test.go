@@ -42,6 +42,16 @@ func TestDB(t *testing.T) {
 	if returnUser != user1 {
 		t.Fatal("Return struct not the same as input")
 	}
+
+	err = db.Delete("user1")
+	if err != nil {
+		t.Fatal("Error on delete")
+	}
+
+	err = db.Get("user1", user{})
+	if err == nil {
+		t.Fatal("db should throw error when key doesnt exist")
+	}
 }
 
 func TestCollection(t *testing.T) {

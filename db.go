@@ -84,13 +84,18 @@ func (db *DB) Get(key string, data interface{}) error {
 	return db.get("main", key, data)
 }
 
+// Delete an entry from DB
+func (db *DB) Delete(key string) error {
+	return db.delete("main", key)
+}
+
 func (db *DB) add(col, key string, data interface{}) error {
 	// encode key/values
 	k := []byte(key)
 	var v bytes.Buffer
 	gob.NewEncoder(&v).Encode(data)
 
-	err := db.bolt.Update(func(tx *bbolt.Tx) error {
+	return db.bolt.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte(col))
 		err := bucket.Put(k, v.Bytes())
 		if err != nil {
@@ -99,13 +104,11 @@ func (db *DB) add(col, key string, data interface{}) error {
 
 		return nil
 	})
-
-	return err
 }
 
 func (db *DB) get(col, key string, value interface{}) error {
 
-	err := db.bolt.View(func(tx *bbolt.Tx) error {
+	return db.bolt.View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte(col))
 		k := []byte(key)
 		v := bucket.Get(k)
@@ -117,12 +120,20 @@ func (db *DB) get(col, key string, value interface{}) error {
 		}
 		return nil
 	})
+}
 
-	return err
+func (db *DB) delete(col, key string) error {
+	return db.bolt.Update(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket([]byte(col))
+		k := []byte(key)
+
+		err := bucket.Delete(k)
+		return err
+	})
 }
 
 func (db *DB) createBucket(name string) error {
-	err := db.bolt.Update(func(tx *bbolt.Tx) error {
+	return db.bolt.Update(func(tx *bbolt.Tx) error {
 		_, err := tx.CreateBucket([]byte(name))
 		if err != nil {
 			return fmt.Errorf("Cannot create collection: %s", err)
@@ -130,6 +141,4 @@ func (db *DB) createBucket(name string) error {
 
 		return err
 	})
-
-	return err
 }
