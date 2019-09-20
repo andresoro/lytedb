@@ -45,7 +45,7 @@ func TestDB(t *testing.T) {
 
 	err = db.Delete("user1")
 	if err != nil {
-		t.Fatal("Error on delete")
+		t.Fatalf("Error on delete: %e", err)
 	}
 
 	err = db.Get("user1", user{})
