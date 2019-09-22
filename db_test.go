@@ -1,6 +1,7 @@
 package lyte
 
 import (
+	"fmt"
 	"os"
 	"testing"
 )
@@ -120,4 +121,51 @@ func TestUniqueKeysOnCollections(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error adding same key to different collection: ", err)
 	}
+}
+
+func BenchmarkAdd(b *testing.B) {
+	path := "./data.db"
+	db, err := New(path)
+	if err != nil {
+		b.Fatal("DB will not open. Gives error: ", err)
+	}
+	defer func() {
+		db.Close()
+		os.Remove(path)
+	}()
+
+	u := user{
+		Age:  15,
+		Name: "Hello",
+	}
+
+	for i := 0; i < b.N; i++ {
+		id := fmt.Sprintf("id-%d", i)
+		db.Add(id, u)
+	}
+
+}
+
+func BenchmarkGet(b *testing.B) {
+	path := "./data.db"
+	db, err := New(path)
+	if err != nil {
+		b.Fatal("DB will not open. Gives error: ", err)
+	}
+	defer func() {
+		db.Close()
+		os.Remove(path)
+	}()
+
+	u := user{
+		Age:  15,
+		Name: "Hello",
+	}
+
+	db.Add("user", u)
+
+	for i := 0; i < b.N; i++ {
+		db.Get("user", &user{})
+	}
+
 }
