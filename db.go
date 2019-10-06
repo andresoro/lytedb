@@ -112,7 +112,7 @@ func (db *DB) get(col, key string, value interface{}) error {
 	// check if value to write onto is a pointer
 	prtRef := reflect.ValueOf(value)
 	if prtRef.Kind() != reflect.Ptr {
-		return errors.New("Struct to write onto needs to be passed as pointer")
+		return ErrValueNotPtr
 	}
 
 	return db.bolt.View(func(tx *bbolt.Tx) error {
