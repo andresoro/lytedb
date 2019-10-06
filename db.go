@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"reflect"
 	"sync"
 
 	"go.etcd.io/bbolt"
@@ -107,6 +108,12 @@ func (db *DB) add(col, key string, data interface{}) error {
 }
 
 func (db *DB) get(col, key string, value interface{}) error {
+
+	// check if value to write onto is a pointer
+	prtRef := reflect.ValueOf(value)
+	if prtRef.Kind() != reflect.Ptr {
+		return errors.New("Struct to write onto needs to be passed as pointer")
+	}
 
 	return db.bolt.View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte(col))

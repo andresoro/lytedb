@@ -123,6 +123,32 @@ func TestUniqueKeysOnCollections(t *testing.T) {
 	}
 }
 
+func TestPointer(t *testing.T) {
+	path := "./data.db"
+	db, err := New(path)
+	if err != nil {
+		t.Fatal("DB will not open. Gives error: ", err)
+	}
+	defer func() {
+		db.Close()
+		os.Remove(path)
+	}()
+
+	userTest := user{
+		Name: "Andres",
+		Age:  22,
+	}
+
+	err = db.Add("user", userTest)
+
+	var newUser user
+
+	err = db.Get("user", newUser)
+	if err != ErrValueNotPtr {
+		t.Error("Get should fail when ptr is not passed into Get")
+	}
+}
+
 func BenchmarkAdd(b *testing.B) {
 	path := "./data.db"
 	db, err := New(path)
@@ -167,5 +193,4 @@ func BenchmarkGet(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		db.Get("user", &user{})
 	}
-
 }
