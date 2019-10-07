@@ -3,6 +3,19 @@
 lytedb is an easy to use on-disk database for Go applications. Data is divided into collections and accessed by a key. The main purpose 
 of this database is to store Go data structures on disk. This package leverages [bolt](https://github.com/etcd-io/bbolt) and the standard lib [encoding/gob](https://godoc.org/encoding/gob) to handle storage and serialization. Read about motivations [here](https://aoro.io/post/lytedb/).
 
+Storing/retrieving structs on disk should be this easy:
+
+``` go
+// add a new user under the key 'user-id'
+lytedb.Add("user-id", User{Age: 22, Name: "Andres"})
+
+// our user struct
+var user User
+
+// write value assigned to 'user-id' onto our struct
+lytedb.Get("user-id", &user)
+```
+
 # Usage
 
 ## Open DB
