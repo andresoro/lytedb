@@ -1,7 +1,6 @@
 # lytedb
 
-lytedb is an easy to use on-disk database for Go applications. Data is divided into collections and accessed by a key. The main purpose 
-of this database is to store Go data structures on disk. This package leverages [bolt](https://github.com/etcd-io/bbolt) and the standard lib [encoding/gob](https://godoc.org/encoding/gob) to handle storage and serialization. Read about motivations [here](https://aoro.io/post/lytedb/).
+lytedb is an easy to use on-disk database for Go applications. Data is divided into collections and accessed by a key. This package leverages [bolt](https://github.com/etcd-io/bbolt) and the standard lib [encoding/gob](https://godoc.org/encoding/gob) to handle storage and serialization. Read about motivations [here](https://aoro.io/post/lytedb/).
 
 Storing/retrieving structs on disk should be this easy:
 
