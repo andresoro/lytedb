@@ -52,7 +52,7 @@ type User struct {
 }
 
 user := User{
-    ID: "Hello World",
+    ID: "Vote for Pedro",
     Name: "Napoleon",
     Age: 25,
 }
